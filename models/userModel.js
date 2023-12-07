@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema(
     },
     image: {
       type: String,
-      default: CLOUDINARY_IMAGE_ACCESS_URL + "DUMMY_PROFILE_LOGO.png",
+      default: "DUMMY_PROFILE_LOGO.png",
     },
   },
   {
