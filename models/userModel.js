@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { CLOUDINARY_IMAGE_ACCESS_URL } from "../src/utils/constants.js";
 
 const userSchema = mongoose.Schema(
   {
