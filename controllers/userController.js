@@ -38,14 +38,11 @@ export const registerUser = async (req, res) => {
     await user.save();
     const jsonToken = generateToken(user._id);
     res.status(201).send({
-      message: "User Created SuccessFully",
-      user: {
-        _id: user._id,
-        name,
-        email,
-        image,
-        jsonToken,
-      },
+      _id: user._id,
+      name,
+      email,
+      image,
+      jsonToken,
     });
   } catch (error) {
     console.log(error);
