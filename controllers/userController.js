@@ -55,6 +55,7 @@ export const registerUser = async (req, res) => {
     const jsonToken = generateToken(user._id);
     res.status(201).send({
       _id: user._id,
+      user_id,
       name,
       email,
       image,
