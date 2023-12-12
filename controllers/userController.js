@@ -7,16 +7,31 @@ dotenv.config();
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, confirm_password, image } = req.body;
-    const checkUserExists = await UserModel.findOne({ email });
-    if (checkUserExists)
-      return res.status(400).send({ message: "User Already Exists" });
-
+    const { name, email, user_id, password, confirm_password, image } =
+      req.body;
     if (!email || !password || !confirm_password || !name)
       return res.status(400).send({ message: "Fields must not to be Empty" });
 
+    const checkUserExistsWithEmail = await UserModel.findOne({ email });
+    const checkUserExistsWIthId = await UserModel.findOne({ user_id });
+
+    if (checkUserExistsWithEmail)
+      return res
+        .status(400)
+        .send({ message: "User Already Exists with This Email Id" });
+
+    if (checkUserExistsWIthId)
+      return res
+        .status(400)
+        .send({ message: "User Id Already Exists Please Enter Unique Id" });
+
     if (!validator.isEmail(email))
       return res.status(400).send({ message: "Please Enter a Valid Email" });
+
+    if (name.length < 4)
+      res.status(400).send({
+        message: "Name is Too Short,it contain at least 4 characters",
+      });
 
     if (password !== confirm_password)
       return res.status(400).send({ message: "Both Passwords should Match" });
@@ -31,6 +46,7 @@ export const registerUser = async (req, res) => {
 
     const user = new UserModel({
       name,
+      user_id,
       email,
       password: hashed_password,
       image,
@@ -53,25 +69,54 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const userExists = await UserModel.findOne({ email });
-    if (!validator.isEmail(email))
-      return res.status(400).send({ message: "Please Enter a Valid Email" });
+    if (!validator.isEmail(email)) {
+      const userExistsWithId = await UserModel.findOne({ user_id: email }); //checking With user_id
+      if (!userExistsWithId) {
+        return res
+          .status(400)
+          .send({ message: "Please Enter a Valid User Id or Email" });
+      } else {
+        const comparePassword = await bcrypt.compare(
+          password,
+          userExistsWithId.password
+        );
+        if (!comparePassword)
+          return res
+            .status(400)
+            .send({ message: "Please Check Your Password" });
 
-    if (!userExists)
+        const jsonToken = generateToken(userExistsWithId._id);
+
+        res.status(200).send({
+          _id: userExistsWithId._id,
+          name: userExistsWithId.name,
+          email: userExistsWithId.email,
+          user_id: email,
+          jsonToken,
+        });
+      }
+    }
+
+    const userExistsWithEmail = await UserModel.findOne({ email });
+    if (!userExistsWithEmail) {
       return res
-        .status(404)
-        .send({ message: "User Not Exists, Please Enter a valid user Email" });
-
-    const comparePassword = await bcrypt.compare(password, userExists.password);
+        .status(400)
+        .send({ message: "Please Enter a Valid User Id or Email" });
+    }
+    const comparePassword = await bcrypt.compare(
+      password,
+      userExistsWithEmail.password
+    );
     if (!comparePassword)
       return res.status(400).send({ message: "Please Check Your Password" });
 
-    const jsonToken = generateToken(userExists._id);
+    const jsonToken = generateToken(userExistsWithEmail._id);
 
     res.status(200).send({
-      _id: userExists._id,
-      name: userExists.name,
+      _id: userExistsWithEmail._id,
+      name: userExistsWithEmail.name,
       email,
+      user_id: userExistsWithEmail.user_id,
       jsonToken,
     });
   } catch (error) {
