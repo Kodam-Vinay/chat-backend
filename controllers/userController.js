@@ -87,7 +87,6 @@ export const loginUser = async (req, res) => {
             .send({ message: "Please Check Your Password" });
 
         const jsonToken = generateToken(userExistsWithId._id);
-
         res.status(200).send({
           _id: userExistsWithId._id,
           name: userExistsWithId.name,
@@ -96,30 +95,30 @@ export const loginUser = async (req, res) => {
           jsonToken,
         });
       }
+    } else {
+      const userExistsWithEmail = await UserModel.findOne({ email });
+      if (!userExistsWithEmail) {
+        return res
+          .status(400)
+          .send({ message: "Please Enter a Valid User Id or Email" });
+      }
+      const comparePassword = await bcrypt.compare(
+        password,
+        userExistsWithEmail.password
+      );
+      if (!comparePassword)
+        return res.status(400).send({ message: "Please Check Your Password" });
+
+      const jsonToken = generateToken(userExistsWithEmail._id);
+
+      res.status(200).send({
+        _id: userExistsWithEmail._id,
+        name: userExistsWithEmail.name,
+        email,
+        user_id: userExistsWithEmail.user_id,
+        jsonToken,
+      });
     }
-
-    const userExistsWithEmail = await UserModel.findOne({ email });
-    if (!userExistsWithEmail) {
-      return res
-        .status(400)
-        .send({ message: "Please Enter a Valid User Id or Email" });
-    }
-    const comparePassword = await bcrypt.compare(
-      password,
-      userExistsWithEmail.password
-    );
-    if (!comparePassword)
-      return res.status(400).send({ message: "Please Check Your Password" });
-
-    const jsonToken = generateToken(userExistsWithEmail._id);
-
-    res.status(200).send({
-      _id: userExistsWithEmail._id,
-      name: userExistsWithEmail.name,
-      email,
-      user_id: userExistsWithEmail.user_id,
-      jsonToken,
-    });
   } catch (error) {
     console.log(error);
     res.status(400).send(error);
